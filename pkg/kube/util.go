@@ -13,6 +13,7 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
+	"net/url"
 )
 
 type missingKeyError struct {
@@ -105,6 +106,14 @@ func replaceInner(
 func genericReplacement(key, value string, resource Resource) (_ interface{}, err []error) {
 	var nonStringReplacement interface{}
 	var placeholderRegex = specificPathPlaceholder
+
+	decoded, decodeError := url.QueryUnescape(value)
+	if decodeError == nil && decoded != value && placeholderRegex.Match([]byte(decoded)) {
+		res, err := genericReplacement(key, string(decoded), resource)
+
+		utils.VerboseToStdErr("key %s had URL encoded placeholder value, URL encoding value %s to fit", key, value)
+		return url.QueryEscape(stringify(res)), err
+	}
 
 	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
 	// so we look for those. Only if the annotation is absent do we narrow the search to placeholders with
