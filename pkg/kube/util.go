@@ -26,6 +26,7 @@ func (e *missingKeyError) Error() string {
 
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
 var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:([^#]+)#([^#]+)(?:#([^#]+))?>`)
+var specificPathUrlEncodedPlaceholder, _ = regexp.Compile(`(?mU)%3Cpath%3A(.+)%23(.+)(?:%23(.+))?%3E`)
 var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(?P<path>[^#]+?)#(?P<key>[^#]+?)(?:#(?P<version>.+?))??`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
@@ -107,12 +108,25 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	var nonStringReplacement interface{}
 	var placeholderRegex = specificPathPlaceholder
 
-	decoded, decodeError := url.QueryUnescape(value)
-	if decodeError == nil && decoded != value && placeholderRegex.Match([]byte(decoded)) {
-		res, err := genericReplacement(key, string(decoded), resource)
+	decodedValue := specificPathUrlEncodedPlaceholder.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
+		decoded, decErr:= url.QueryUnescape(string(match))
+		if decErr != nil || !placeholderRegex.Match([]byte(decoded)) {
+			err = append(err, decErr)
+			return match
+		}
 
-		utils.VerboseToStdErr("key %s had URL encoded placeholder value, URL encoding value %s to fit", key, value)
-		return url.QueryEscape(stringify(res)), err
+		repl, replErr := genericReplacement(key, decoded, resource)
+		if replErr != nil {
+			err = append(err, replErr...)
+			return match
+		}
+
+		return []byte(url.QueryEscape(stringify(repl)))
+	})
+
+	if string(decodedValue) != value {
+		utils.VerboseToStdErr("key %s had value with URL encoded placeholder", key)
+		value = string(decodedValue)
 	}
 
 	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
