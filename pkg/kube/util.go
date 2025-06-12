@@ -108,6 +108,8 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	var nonStringReplacement interface{}
 	var placeholderRegex = specificPathPlaceholder
 
+	// If some sepecific path placeholders were URL-encoded, we match them with a special regex, 
+	// decode them, get secret values and re-encode them.
 	decodedValue := specificPathUrlEncodedPlaceholder.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
 		decoded, decErr:= url.QueryUnescape(string(match))
 		if decErr != nil || !placeholderRegex.Match([]byte(decoded)) {
@@ -239,7 +241,7 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 
 func secretReplacement(key, value string, resource Resource) (interface{}, []error) {
 	decoded, err := base64.StdEncoding.DecodeString(value)
-	if err == nil && genericPlaceholder.Match(decoded) {
+	if err == nil && (genericPlaceholder.Match(decoded) || specificPathUrlEncodedPlaceholder.Match(decoded)) {
 		res, err := genericReplacement(key, string(decoded), resource)
 
 		utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, value)
