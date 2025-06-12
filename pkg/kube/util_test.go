@@ -484,6 +484,45 @@ func TestGenericReplacement_multiStringSpecificPathUrlEncoded(t *testing.T) {
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
+func TestSecretReplacement_SpecificPathUrlEncoded_Base64Encoded(t *testing.T) {
+	// Test that the secret replacement function can find/replace placeholders that were url-encoded
+	// and then base64-encoded.
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"password": "redis@123",
+		"username": "redis",
+	})
+
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"url": `JTNDcGF0aCUzQWJsYWglMkZibGFoJTIzdXNlcm5hbWUlM0U6Ly86JTNDcGF0aCUzQWJsYWglMkZibGFoJTIzcGFzc3dvcmQlM0VAcmVkaXMtbWFzdGVyLmhhcmJvci5zdmMuY2x1c3Rlci5sb2NhbC8wP2lkbGVfdGltZW91dF9zZWNvbmRzPTMwCg==`,
+		},
+		Data: map[string]interface{}{
+			"password": "test",
+			"username": "test",
+		},
+		Backend: &mv,
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, secretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"url": "cmVkaXM6Ly86cmVkaXMlNDAxMjNAcmVkaXMtbWFzdGVyLmhhcmJvci5zdmMuY2x1c3Rlci5sb2NhbC8wP2lkbGVfdGltZW91dF9zZWNvbmRzPTMwCg==",
+		},
+		Data: map[string]interface{}{
+			"password": "test",
+			"username": "test",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestGenericReplacement_Base64(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
