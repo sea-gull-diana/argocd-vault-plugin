@@ -196,8 +196,7 @@ func TestGenericReplacement_specificPathWithValidation(t *testing.T) {
 }
 
 func TestGenericReplacement_specificPathUrlEncoded(t *testing.T) {
-	// Test that the specific-path placeholder syntax is used to find/replace placeholders that were url-encoded
-	// along with the generic syntax, since the generic Vault path is defined
+	// Test that the generic replacement function can find/replace placeholders that were url-encoded
 	mv := helpers.MockVault{}
 	mv.LoadData(map[string]interface{}{
 		"namespace": "default ns",
@@ -240,8 +239,7 @@ func TestGenericReplacement_specificPathUrlEncoded(t *testing.T) {
 }
 
 func TestGenericReplacement_specificPathUrlEncodedWithValidation(t *testing.T) {
-	// Test that the specific-path placeholder syntax is used to find/replace placeholders
-	// along with the generic syntax, since the generic Vault path is defined
+	// Test that the generic replacement function can find/replace placeholders that were url-encoded
 	mv := helpers.MockVault{}
 	mv.LoadData(map[string]interface{}{
 		"namespace": "default ns",
@@ -444,6 +442,7 @@ func TestGenericReplacement_multiString(t *testing.T) {
 }
 
 func TestGenericReplacement_multiStringSpecificPathUrlEncoded(t *testing.T) {
+	// Test that multiple url-encoded placeholders in one value string can all be found/replaced.
 	mv := helpers.MockVault{}
 	mv.LoadData(map[string]interface{}{
 		"name": "my app",
@@ -495,7 +494,7 @@ func TestSecretReplacement_SpecificPathUrlEncoded_Base64Encoded(t *testing.T) {
 
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
-			"url": `JTNDcGF0aCUzQWJsYWglMkZibGFoJTIzdXNlcm5hbWUlM0U6Ly86JTNDcGF0aCUzQWJsYWglMkZibGFoJTIzcGFzc3dvcmQlM0VAcmVkaXMtbWFzdGVyLmhhcmJvci5zdmMuY2x1c3Rlci5sb2NhbC8wP2lkbGVfdGltZW91dF9zZWNvbmRzPTMwCg==`,
+			"url": `cmVkaXM6Ly8lM0NwYXRoJTNBYmxhaCUyRmJsYWglMjN1c2VybmFtZSUzRTolM0NwYXRoJTNBYmxhaCUyRmJsYWglMjNwYXNzd29yZCUzRUByZWRpcy1tYXN0ZXIuaGFyYm9yLnN2Yy5jbHVzdGVyLmxvY2FsLzA/aWRsZV90aW1lb3V0X3NlY29uZHM9MzAK`,
 		},
 		Data: map[string]interface{}{
 			"password": "test",
@@ -511,7 +510,7 @@ func TestSecretReplacement_SpecificPathUrlEncoded_Base64Encoded(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"url": "cmVkaXM6Ly86cmVkaXMlNDAxMjNAcmVkaXMtbWFzdGVyLmhhcmJvci5zdmMuY2x1c3Rlci5sb2NhbC8wP2lkbGVfdGltZW91dF9zZWNvbmRzPTMwCg==",
+			"url": "cmVkaXM6Ly9yZWRpczpyZWRpcyU0MDEyM0ByZWRpcy1tYXN0ZXIuaGFyYm9yLnN2Yy5jbHVzdGVyLmxvY2FsLzA/aWRsZV90aW1lb3V0X3NlY29uZHM9MzAK",
 		},
 		Data: map[string]interface{}{
 			"password": "test",
